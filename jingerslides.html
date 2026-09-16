@@ -1,0 +1,1690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SpatialDeck Component Studio</title>
+  <style>
+    :root {
+      --bg: #040508;
+      --panel: #0d0f18;
+      --panel-border: rgba(255, 255, 255, 0.16);
+      --accent: #6366f1;
+      --accent-bright: #818cf8;
+      --text: #ffffff;
+      --text-muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      height: 48px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--panel-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 100;
+    }
+
+    .brand {
+      font-weight: 800;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .brand span {
+      background: linear-gradient(135deg, #c7d2fe, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--panel-border);
+      color: var(--text);
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 5px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+
+    button:hover {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: #fff;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    button.primary:hover {
+      background: var(--accent-bright);
+    }
+
+    #studio-body {
+      flex: 1;
+      display: flex;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #spatial-map-viewport {
+      flex: 1;
+      position: relative;
+      background: radial-gradient(circle 1.5px at 20px 20px, rgba(255, 255, 255, 0.14) 1.5px, transparent 0);
+      background-size: 28px 28px;
+      overflow: hidden;
+      cursor: grab;
+    }
+
+    #spatial-map-viewport:active {
+      cursor: grabbing;
+    }
+
+    #spatial-canvas {
+      position: absolute;
+      width: 10000px;
+      height: 10000px;
+      top: -4500px;
+      left: -4500px;
+      transform-origin: 5000px 5000px;
+    }
+
+    #canvas-lines-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .spatial-slide-card {
+      position: absolute;
+      width: 150px;
+      height: 85px;
+      background: #0d111c;
+      border: 1.5px solid rgba(255, 255, 255, 0.22);
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.85);
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .spatial-slide-card:hover {
+      border-color: #c7d2fe;
+      transform: translateY(-2px);
+    }
+
+    .spatial-slide-card.active {
+      border-color: #818cf8;
+      box-shadow: 0 0 0 2px #818cf8, 0 12px 30px rgba(99, 102, 241, 0.55);
+      z-index: 100 !important;
+    }
+
+    .card-header {
+      padding: 4px 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border-bottom: 1px solid var(--panel-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 9px;
+      font-weight: 800;
+      color: #a5b4fc;
+    }
+
+    .card-body {
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex: 1;
+      justify-content: center;
+    }
+
+    .card-title {
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #fff;
+    }
+
+    .card-badge {
+      font-size: 9px;
+      color: #38bdf8;
+      font-family: monospace;
+      font-weight: 600;
+    }
+
+    /* Right Studio Panel (Component Designer) */
+    #sidebar {
+      width: 420px;
+      background: var(--panel);
+      border-left: 1px solid var(--panel-border);
+      display: flex;
+      flex-direction: column;
+      z-index: 50;
+      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.6);
+    }
+
+    .sidebar-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--panel-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .sidebar-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .direction-cluster {
+      background: #05070d;
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .dir-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+
+    /* Component Tool Shelf */
+    .toolbox {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .tool-btn {
+      padding: 8px 4px;
+      font-size: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      text-align: center;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--panel-border);
+    }
+
+    .tool-btn:hover {
+      background: rgba(99, 102, 241, 0.25);
+      border-color: var(--accent-bright);
+    }
+
+    /* Component Card in Inspector */
+    .component-card {
+      background: #060810;
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+    }
+
+    .component-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #c7d2fe;
+    }
+
+    .component-del {
+      background: transparent;
+      border: none;
+      color: #f87171;
+      padding: 2px 4px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .component-del:hover {
+      color: #ef4444;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #cbd5e1;
+    }
+
+    input, textarea, select {
+      background: #04050a;
+      border: 1px solid var(--panel-border);
+      color: #fff;
+      padding: 7px 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      outline: none;
+      font-family: inherit;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--accent-bright);
+    }
+
+    .canvas-hud {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span>SpatialDeck Component Studio</span>
+    </div>
+    <div class="header-actions">
+      <button onclick="resetDemoDeck()" style="border-color: rgba(255,255,255,0.2); color: #fca5a5;">
+        ↺ Reset Deck
+      </button>
+      <button onclick="openInNewTab()" style="border-color: #34d399; color: #34d399; font-weight:700;">
+        ↗ Open in New Tab
+      </button>
+      <button class="primary" onclick="exportStaticFile()">
+        📦 Export HTML
+      </button>
+    </div>
+  </header>
+
+  <div id="studio-body">
+    <div id="spatial-map-viewport">
+      <div id="spatial-canvas">
+        <svg id="canvas-lines-svg"></svg>
+        <div id="cards-layer"></div>
+      </div>
+      <div class="canvas-hud">
+        <span>💾 Auto-Saved | 🗺️ Drag canvas to pan | Component-driven slides</span>
+      </div>
+    </div>
+
+    <!-- Component Design Sidebar -->
+    <div id="sidebar">
+      <div class="sidebar-header">
+        <span id="active-slide-label" style="font-weight: 800; color: #c7d2fe;">Slide #1</span>
+        <button onclick="deleteCurrentSlide()" style="color: #f87171; border-color: rgba(248, 113, 113, 0.4);">Delete Slide</button>
+      </div>
+
+      <div class="sidebar-scroll">
+        <!-- Spatial Branching Navigation -->
+        <div class="direction-cluster">
+          <label>Branch from Active Slide:</label>
+          <div class="dir-grid">
+            <button onclick="appendDirection('east')">➡️ East (+X)</button>
+            <button onclick="appendDirection('west')">⬅️ West (-X)</button>
+            <button onclick="appendDirection('south')">⬇️ South (+Y)</button>
+            <button onclick="appendDirection('north')">⬆️ North (-Y)</button>
+            <button onclick="appendDirection('in')" style="background: rgba(99, 102, 241, 0.25); border-color: #6366f1;">🔭 Stack In (+Z)</button>
+            <button onclick="appendDirection('out')" style="background: rgba(99, 102, 241, 0.15); border-color: #818cf8;">🔭 Stack Out (-Z)</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Slide Title</label>
+          <input id="slide-title" placeholder="Title..." oninput="updateSlideTitle(this.value)" />
+        </div>
+
+        <!-- Add Component Toolbox -->
+        <div class="toolbox">
+          <label>Add Component to Slide:</label>
+          <div class="tool-grid">
+            <button class="tool-btn" onclick="addComponent('text')"><span>📝</span>Text Block</button>
+            <button class="tool-btn" onclick="addComponent('embed')"><span>🖼️</span>Media Embed</button>
+            <button class="tool-btn" onclick="addComponent('button')"><span>🔘</span>Action Button</button>
+            <button class="tool-btn" onclick="addComponent('orb')"><span>⭕</span>Stat Orb</button>
+            <button class="tool-btn" onclick="addComponent('mcq')"><span>❓</span>MCQ Quiz</button>
+            <button class="tool-btn" onclick="addComponent('code')"><span>📦</span>Custom HTML</button>
+          </div>
+        </div>
+
+        <!-- Rendered Component List for Current Slide -->
+        <div id="components-container" style="display: flex; flex-direction: column; gap: 10px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const GRID_SPACING_X = 220;
+    const GRID_SPACING_Y = 160;
+    const STACK_OFFSET_X = 14;
+    const STACK_OFFSET_Y = 14;
+    const STEP_Z = 1400;
+    const STORAGE_KEY = "SPATIAL_DECK_STORAGE_COMPONENTS_V1";
+
+    const defaultDeck = [
+      {
+        id: "s-1",
+        parentId: null,
+        title: "Spatial Component Studio",
+        gridX: 0,
+        gridY: 0,
+        z: 0,
+        components: [
+          {
+            type: "text",
+            id: "c-1",
+            content: "Welcome to the component-driven slide studio. Build slides out of modular blocks!"
+          },
+          {
+            type: "orb",
+            id: "c-2",
+            number: "60 FPS",
+            label: "GPU Hardware Compositing"
+          },
+          {
+            type: "button",
+            id: "c-3",
+            label: "Explore South Section ⬇",
+            link: "south"
+          }
+        ]
+      },
+      {
+        id: "s-2",
+        parentId: "s-1",
+        title: "Media & Web Sandbox",
+        gridX: 1,
+        gridY: 0,
+        z: 0,
+        components: [
+          {
+            type: "text",
+            id: "c-4",
+            content: "Modular embed components automatically wrap images, videos, GIFs, or live iframes."
+          },
+          {
+            type: "embed",
+            id: "c-5",
+            url: "https://media.giphy.com/media/3oKIPnAiaMCws8nOsE/giphy.gif"
+          }
+        ]
+      },
+      {
+        id: "s-3",
+        parentId: "s-1",
+        title: "Interactive MCQ Checkpoint",
+        gridX: 0,
+        gridY: 1,
+        z: 0,
+        components: [
+          {
+            type: "text",
+            id: "c-6",
+            content: "Test your audience in real time with interactive quizzes directly embedded in the slide!"
+          },
+          {
+            type: "mcq",
+            id: "c-7",
+            question: "How are depth stacks rendered on the minimap?",
+            options: ["Overlapping concentric rings", "Adjacent side-by-side circles without lines", "Random diagonals"],
+            correct: 1
+          }
+        ]
+      }
+    ];
+
+    let slides = [];
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      slides = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(defaultDeck));
+    } catch(e) {
+      slides = JSON.parse(JSON.stringify(defaultDeck));
+    }
+
+    function persist() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(slides));
+      } catch(e) {}
+    }
+
+    function resetDemoDeck() {
+      if (confirm("Reset everything to default demonstration deck?")) {
+        try {
+          localStorage.removeItem(STORAGE_KEY);
+        } catch(e) {}
+        slides = JSON.parse(JSON.stringify(defaultDeck));
+        currentIdx = 0;
+        persist();
+        renderSpatialCanvas();
+      }
+    }
+
+    let currentIdx = 0;
+
+    // Pan Canvas
+    const container = document.getElementById("spatial-map-viewport");
+    const canvas = document.getElementById("spatial-canvas");
+    let isPanning = false;
+    let startX = 0, startY = 0;
+    let canvasX = -4500, canvasY = -4500;
+
+    container.addEventListener("mousedown", (e) => {
+      if (e.target === container || e.target.id === "canvas-lines-svg" || e.target.id === "spatial-canvas") {
+        isPanning = true;
+        startX = e.clientX - canvasX;
+        startY = e.clientY - canvasY;
+      }
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if (!isPanning) return;
+      canvasX = e.clientX - startX;
+      canvasY = e.clientY - startY;
+      canvas.style.transform = `translate(${canvasX + 4500}px, ${canvasY + 4500}px)`;
+    });
+
+    window.addEventListener("mouseup", () => isPanning = false);
+
+    function getStackRank(s) {
+      const cluster = slides.filter(item => item.gridX === s.gridX && item.gridY === s.gridY);
+      cluster.sort((a, b) => b.z - a.z);
+      return cluster.findIndex(item => item.id === s.id);
+    }
+
+    function getLayerBadge(z) {
+      if (z === 0) return "Base";
+      if (z < 0) return `In-${Math.abs(z) / STEP_Z}`;
+      return `Out-${z / STEP_Z}`;
+    }
+
+    function renderSpatialCanvas() {
+      const cardsLayer = document.getElementById("cards-layer");
+      cardsLayer.innerHTML = "";
+
+      slides.forEach((s, idx) => {
+        const stackRank = getStackRank(s);
+        const canvasPosX = 5000 + (s.gridX * GRID_SPACING_X) + (stackRank * STACK_OFFSET_X);
+        const canvasPosY = 5000 + (s.gridY * GRID_SPACING_Y) + (stackRank * STACK_OFFSET_Y);
+
+        const card = document.createElement("div");
+        card.className = `spatial-slide-card ${idx === currentIdx ? "active" : ""}`;
+        card.id = `builder-card-${idx}`;
+        card.style.left = `${canvasPosX}px`;
+        card.style.top = `${canvasPosY}px`;
+        card.style.zIndex = 10 + stackRank;
+
+        card.innerHTML = `
+          <div class="card-header">
+            <span>#${idx + 1}</span>
+            <span>${getLayerBadge(s.z)}</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">${s.title || "Untitled"}</div>
+            <div class="card-badge">${s.components.length} Component${s.components.length === 1 ? '' : 's'}</div>
+          </div>
+        `;
+
+        card.onclick = () => selectSlide(idx);
+        cardsLayer.appendChild(card);
+      });
+
+      renderConnectingLines();
+      populateSidebar();
+    }
+
+    function renderConnectingLines() {
+      const svg = document.getElementById("canvas-lines-svg");
+      svg.innerHTML = "";
+
+      slides.forEach((child) => {
+        if (!child.parentId) return;
+        const parent = slides.find(s => s.id === child.parentId);
+        if (!parent) return;
+
+        if (child.gridX === parent.gridX && child.gridY === parent.gridY) return;
+
+        const x1 = 5000 + (parent.gridX * GRID_SPACING_X) + 75;
+        const y1 = 5000 + (parent.gridY * GRID_SPACING_Y) + 42;
+        const x2 = 5000 + (child.gridX * GRID_SPACING_X) + 75;
+        const y2 = 5000 + (child.gridY * GRID_SPACING_Y) + 42;
+
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x1);
+        line.setAttribute("y1", y1);
+        line.setAttribute("x2", x2);
+        line.setAttribute("y2", y2);
+        line.setAttribute("stroke", "rgba(129, 140, 248, 0.45)");
+        line.setAttribute("stroke-width", "2");
+        line.setAttribute("stroke-dasharray", "4,4");
+        svg.appendChild(line);
+      });
+    }
+
+    function selectSlide(idx) {
+      currentIdx = idx;
+      renderSpatialCanvas();
+    }
+
+    function updateSlideTitle(val) {
+      slides[currentIdx].title = val;
+      persist();
+      const cardEl = document.getElementById(`builder-card-${currentIdx}`);
+      if (cardEl) {
+        cardEl.querySelector(".card-title").textContent = val || "Untitled";
+      }
+    }
+
+    // Component Management Engine
+    function addComponent(type) {
+      const s = slides[currentIdx];
+      const compId = `c-${Date.now().toString().slice(-4)}`;
+      let newComp = { type, id: compId };
+
+      if (type === "text") {
+        newComp.content = "New paragraph text...";
+      } else if (type === "embed") {
+        newComp.url = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1800&q=80";
+      } else if (type === "button") {
+        newComp.label = "Next Destination →";
+        newComp.link = "east";
+      } else if (type === "orb") {
+        newComp.number = "100%";
+        newComp.label = "Client-Side Zero Lag";
+      } else if (type === "mcq") {
+        newComp.question = "Enter your quiz question here...";
+        newComp.options = ["Option A", "Option B", "Option C"];
+        newComp.correct = 0;
+      } else if (type === "code") {
+        newComp.html = "<div style='color:#a5b4fc; font-style:italic;'>Custom HTML block</div>";
+      }
+
+      s.components.push(newComp);
+      persist();
+      renderSpatialCanvas();
+    }
+
+    function removeComponent(cId) {
+      const s = slides[currentIdx];
+      s.components = s.components.filter(c => c.id !== cId);
+      persist();
+      renderSpatialCanvas();
+    }
+
+    function populateSidebar() {
+      const s = slides[currentIdx];
+      if (!s) return;
+
+      document.getElementById("active-slide-label").textContent = `Slide #${currentIdx + 1}: ${s.title}`;
+      document.getElementById("slide-title").value = s.title;
+
+      const container = document.getElementById("components-container");
+      container.innerHTML = "";
+
+      if (s.components.length === 0) {
+        container.innerHTML = `<div style="font-size:11px; color:var(--text-muted); text-align:center; padding:12px;">No components on this slide yet. Add one above!</div>`;
+        return;
+      }
+
+      s.components.forEach((c, idx) => {
+        const card = document.createElement("div");
+        card.className = "component-card";
+
+        let fieldsHTML = "";
+
+        if (c.type === "text") {
+          fieldsHTML = `
+            <div class="form-group">
+              <label>Text Content</label>
+              <textarea rows="3" oninput="updateCompData('${c.id}', 'content', this.value)">${c.content || ""}</textarea>
+            </div>
+          `;
+        } else if (c.type === "embed") {
+          fieldsHTML = `
+            <div class="form-group">
+              <label>Media / Embed URL</label>
+              <input value="${c.url || ""}" placeholder="https://..." oninput="updateCompData('${c.id}', 'url', this.value)" />
+            </div>
+          `;
+        } else if (c.type === "button") {
+          fieldsHTML = `
+            <div class="form-group">
+              <label>Button Label</label>
+              <input value="${c.label || ""}" oninput="updateCompData('${c.id}', 'label', this.value)" />
+            </div>
+            <div class="form-group">
+              <label>Action Target (Direction or Slide #)</label>
+              <input value="${c.link || ""}" placeholder="east, south, or slide index" oninput="updateCompData('${c.id}', 'link', this.value)" />
+            </div>
+          `;
+        } else if (c.type === "orb") {
+          fieldsHTML = `
+            <div class="form-group">
+              <label>Stat Metric / Value</label>
+              <input value="${c.number || ""}" oninput="updateCompData('${c.id}', 'number', this.value)" />
+            </div>
+            <div class="form-group">
+              <label>Label</label>
+              <input value="${c.label || ""}" oninput="updateCompData('${c.id}', 'label', this.value)" />
+            </div>
+          `;
+        } else if (c.type === "mcq") {
+          fieldsHTML = `
+            <div class="form-group">
+              <label>Quiz Question</label>
+              <input value="${c.question || ""}" oninput="updateCompData('${c.id}', 'question', this.value)" />
+            </div>
+            <div class="form-group">
+              <label>Options (comma separated)</label>
+              <input value="${(c.options || []).join(', ')}" oninput="updateMCQOptions('${c.id}', this.value)" />
+            </div>
+            <div class="form-group">
+              <label>Correct Option Index (0 = 1st, 1 = 2nd...)</label>
+              <input type="number" min="0" value="${c.correct || 0}" oninput="updateCompData('${c.id}', 'correct', parseInt(this.value, 10))" />
+            </div>
+          `;
+        } else if (c.type === "code") {
+          fieldsHTML = `
+            <div class="form-group">
+              <label>Custom HTML / SVG</label>
+              <textarea rows="3" oninput="updateCompData('${c.id}', 'html', this.value)">${c.html || ""}</textarea>
+            </div>
+          `;
+        }
+
+        card.innerHTML = `
+          <div class="component-header">
+            <span>${idx + 1}. ${c.type.toUpperCase()} COMPONENT</span>
+            <button class="component-del" onclick="removeComponent('${c.id}')">✕</button>
+          </div>
+          ${fieldsHTML}
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    function updateCompData(cId, key, value) {
+      const s = slides[currentIdx];
+      const comp = s.components.find(c => c.id === cId);
+      if (comp) {
+        comp[key] = value;
+        persist();
+      }
+    }
+
+    function updateMCQOptions(cId, rawVal) {
+      const s = slides[currentIdx];
+      const comp = s.components.find(c => c.id === cId);
+      if (comp) {
+        comp.options = rawVal.split(',').map(item => item.trim());
+        persist();
+      }
+    }
+
+    function appendDirection(dir) {
+      const parent = slides[currentIdx];
+      let nx = parent.gridX;
+      let ny = parent.gridY;
+      let nz = parent.z;
+
+      if (dir === 'east') nx += 1;
+      if (dir === 'west') nx -= 1;
+      if (dir === 'south') ny += 1;
+      if (dir === 'north') ny -= 1;
+      if (dir === 'in') nz -= STEP_Z;
+      if (dir === 'out') nz += STEP_Z;
+
+      while (slides.some(s => s.gridX === nx && s.gridY === ny && s.z === nz)) {
+        if (dir === 'east' || dir === 'west') nx += (dir === 'east' ? 1 : -1);
+        else if (dir === 'south' || dir === 'north') ny += (dir === 'south' ? 1 : -1);
+        else nz += (dir === 'in' ? -STEP_Z : STEP_Z);
+      }
+
+      slides.push({
+        id: `s-${Date.now().toString().slice(-5)}`,
+        parentId: parent.id,
+        title: `Section ${slides.length + 1}`,
+        gridX: nx,
+        gridY: ny,
+        z: nz,
+        components: [
+          {
+            type: "text",
+            id: `c-${Date.now().toString().slice(-4)}`,
+            content: "Brand new section. Add text, media, buttons, or quiz questions from the sidebar!"
+          }
+        ]
+      });
+
+      persist();
+      selectSlide(slides.length - 1);
+    }
+
+    function deleteCurrentSlide() {
+      if (slides.length <= 1) return alert("Must keep at least one slide.");
+      const deletedId = slides[currentIdx].id;
+      slides.splice(currentIdx, 1);
+      slides.forEach(s => {
+        if (s.parentId === deletedId) s.parentId = slides[0].id;
+      });
+      currentIdx = Math.max(0, currentIdx - 1);
+      persist();
+      selectSlide(currentIdx);
+    }
+
+    // Generate Standalone Component Presentation Document
+    function generateStandaloneHTML(deckData) {
+      const PROJ_STEP_X = 2200;
+      const PROJ_STEP_Y = 1600;
+
+      const compiledSlides = deckData.map(s => ({
+        ...s,
+        x: s.gridX * PROJ_STEP_X,
+        y: s.gridY * PROJ_STEP_Y,
+        z: s.z
+      }));
+
+      return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spatial Presentation</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #040508;
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    #viewport {
+      position: absolute;
+      inset: 0;
+      perspective: 1200px;
+      perspective-origin: 50% 50%;
+      z-index: 2;
+      overflow: hidden;
+    }
+
+    #world {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform-style: preserve-3d;
+      will-change: transform;
+      transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+      contain: layout style;
+    }
+
+    body.is-animating iframe { pointer-events: none !important; }
+
+    .slide-plane {
+      position: absolute;
+      width: 100vw;
+      height: 100vh;
+      margin-left: -50vw;
+      margin-top: -50vh;
+      transform-style: preserve-3d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      backface-visibility: hidden;
+      contain: strict;
+      visibility: visible;
+    }
+
+    .slide-plane.active {
+      pointer-events: auto;
+      z-index: 10;
+    }
+
+    /* Fullscreen Component Canvas */
+    .scroll-canvas {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 8vh 12vw;
+      gap: 22px;
+      background: #040508 !important;
+      pointer-events: auto;
+      opacity: 1 !important;
+    }
+
+    .slide-title-header {
+      font-size: clamp(34px, 4.8vw, 64px);
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      color: #fff;
+      line-height: 1.1;
+    }
+
+    /* Rendered Components Styling */
+    .comp-text-block {
+      font-size: 19px;
+      line-height: 1.7;
+      color: #cbd5e1;
+      max-width: 900px;
+    }
+
+    .comp-embed-block {
+      width: 100%;
+      max-width: 950px;
+      height: 48vh;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: #000;
+    }
+
+    .comp-embed-block iframe,
+    .comp-embed-block video,
+    .comp-embed-block img {
+      width: 100%;
+      height: 100%;
+      border: none;
+      object-fit: cover;
+      display: block;
+      pointer-events: auto !important;
+    }
+
+    .comp-button {
+      align-self: flex-start;
+      background: #6366f1;
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+      transition: all 0.2s ease;
+    }
+    .comp-button:hover {
+      background: #818cf8;
+      transform: translateY(-2px);
+    }
+
+    .comp-orb {
+      align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      padding: 10px 24px;
+      backdrop-filter: blur(16px);
+    }
+
+    .orb-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #6366f1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 13px;
+      color: #fff;
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
+    }
+
+    .orb-label {
+      font-size: 15px;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+
+    /* MCQ Quiz Component */
+    .comp-mcq-box {
+      background: rgba(18, 22, 34, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 800px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      backdrop-filter: blur(20px);
+    }
+
+    .mcq-question {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .mcq-option {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 10px 16px;
+      color: #e2e8f0;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .mcq-option:hover {
+      background: rgba(99, 102, 241, 0.2);
+      border-color: #818cf8;
+    }
+
+    .mcq-option.correct {
+      background: rgba(34, 197, 94, 0.25) !important;
+      border-color: #22c55e !important;
+      color: #4ade80 !important;
+    }
+
+    .mcq-option.wrong {
+      background: rgba(239, 68, 68, 0.25) !important;
+      border-color: #ef4444 !important;
+      color: #f87171 !important;
+    }
+
+    /* Edge Navigation Controls */
+    .edge-nav-btn {
+      position: fixed;
+      z-index: 9000;
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .edge-nav-btn:hover {
+      background: rgba(99, 102, 241, 0.28);
+      border-color: #818cf8;
+      color: #fff;
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.45);
+    }
+
+    .edge-left {
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 32px;
+      height: 68px;
+      border-radius: 16px;
+      font-size: 18px;
+    }
+    .edge-left:hover { transform: translateY(-50%) scale(1.08); }
+
+    .edge-right {
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 32px;
+      height: 68px;
+      border-radius: 16px;
+      font-size: 18px;
+    }
+    .edge-right:hover { transform: translateY(-50%) scale(1.08); }
+
+    .edge-top {
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      height: 28px;
+      width: 64px;
+      border-radius: 14px;
+      font-size: 14px;
+    }
+    .edge-top:hover { transform: translateX(-50%) scale(1.08); }
+
+    .edge-bottom {
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      height: 28px;
+      width: 64px;
+      border-radius: 14px;
+      font-size: 14px;
+    }
+    .edge-bottom:hover { transform: translateX(-50%) scale(1.08); }
+
+    #zoom-stack-cluster {
+      position: fixed;
+      bottom: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9000;
+      display: flex;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 4px 8px;
+      border-radius: 999px;
+      backdrop-filter: blur(16px);
+    }
+
+    .zoom-btn {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.65);
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .zoom-btn:hover {
+      background: rgba(99, 102, 241, 0.3);
+      border-color: #818cf8;
+      color: #fff;
+    }
+
+    #progress-map-container {
+      position: fixed;
+      bottom: 16px;
+      right: 18px;
+      width: 220px;
+      height: 140px;
+      background: rgba(8, 10, 18, 0.7);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      z-index: 9500;
+      display: flex;
+      flex-direction: column;
+      padding: 6px 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    #progress-map-container.minimized {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      padding: 0;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    #progress-map-container.minimized .map-header,
+    #progress-map-container.minimized #map-svg-wrap { display: none !important; }
+    #progress-map-container.minimized #map-minimized-icon { display: block !important; font-size: 15px; }
+    #map-minimized-icon { display: none; }
+
+    #progress-map-container.maximized {
+      width: calc(100vw - 36px);
+      height: calc(100vh - 36px);
+      bottom: 18px;
+      right: 18px;
+      border-radius: 12px;
+      padding: 14px;
+      background: rgba(4, 5, 8, 0.98);
+    }
+
+    .map-header {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #818cf8;
+      font-weight: 800;
+      margin-bottom: 2px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .map-controls { display: flex; gap: 4px; }
+    .map-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: #f1f5f9;
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 9px;
+    }
+
+    #map-svg-wrap { flex: 1; width: 100%; height: 100%; position: relative; }
+    #map-svg { width: 100%; height: 100%; overflow: visible; }
+    .map-circle-node { cursor: pointer; }
+    .map-circle-node:hover circle { filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.9)); }
+
+    #avatar-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 3, 6, 0.96);
+      z-index: 2000000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-box {
+      background: #0d111c;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      padding: 24px;
+      border-radius: 16px;
+      max-width: 480px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .avatar-shelf {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin: 16px 0;
+    }
+
+    .avatar-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 10px 4px;
+      cursor: pointer;
+      font-size: 24px;
+      transition: all 0.15s;
+    }
+
+    .avatar-card:hover {
+      background: rgba(99, 102, 241, 0.35);
+      border-color: #818cf8;
+      transform: scale(1.08);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="avatar-modal">
+    <div class="modal-box">
+      <h3 style="font-size: 16px;">Choose Map Beacon</h3>
+      <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Steers through the waypoints and stacks.</p>
+
+      <div class="avatar-shelf">
+        <div class="avatar-card" onclick="setMapAvatar('🛸')">🛸</div>
+        <div class="avatar-card" onclick="setMapAvatar('🚀')">🚀</div>
+        <div class="avatar-card" onclick="setMapAvatar('☄️')">☄️</div>
+        <div class="avatar-card" onclick="setMapAvatar('🔮')">🔮</div>
+        <div class="avatar-card" onclick="setMapAvatar('⚡')">⚡</div>
+        <div class="avatar-card" onclick="setMapAvatar('👾')">👾</div>
+        <div class="avatar-card" onclick="setMapAvatar('🦅')">🦅</div>
+        <div class="avatar-card" onclick="setMapAvatar('💎')">💎</div>
+      </div>
+
+      <div style="display: flex; gap: 6px;">
+        <input id="custom-emoji-input" placeholder="Or custom emoji..." style="flex:1; padding:6px 10px; border-radius:5px; border:1px solid rgba(255,255,255,0.16); background:#060810; color:#fff; font-size:13px;" />
+        <button onclick="setCustomMapAvatar()" style="padding:6px 12px; border-radius:5px; background:#4f46e5; border:none; color:#fff; font-size:12px; cursor:pointer;">Set Beacon</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="viewport">
+    <div id="world"></div>
+  </div>
+
+  <!-- Subtle Floating Frosted Glass Edge Overlays -->
+  <div class="edge-nav-btn edge-left" onclick="triggerDirection('left')" title="West (ArrowLeft)">‹</div>
+  <div class="edge-nav-btn edge-right" onclick="triggerDirection('right')" title="East (ArrowRight)">›</div>
+  <div class="edge-nav-btn edge-top" onclick="triggerDirection('up')" title="North (ArrowUp)">⌃</div>
+  <div class="edge-nav-btn edge-bottom" onclick="triggerDirection('down')" title="South (ArrowDown)">⌄</div>
+
+  <!-- Minimal Stack Floating Capsule -->
+  <div id="zoom-stack-cluster">
+    <button class="zoom-btn" onclick="triggerDirection('in')">🔭 In (Enter)</button>
+    <button class="zoom-btn" onclick="triggerDirection('out')">🔭 Out (Shift)</button>
+  </div>
+
+  <!-- Interactive Minimap -->
+  <div id="progress-map-container" onclick="handleMapContainerClick(event)">
+    <div id="map-minimized-icon">🗺️</div>
+    <div class="map-header">
+      <span id="map-counter">Section 1 / ${compiledSlides.length}</span>
+      <div class="map-controls">
+        <button class="map-btn" onclick="toggleMapMinimize(event)">—</button>
+        <button class="map-btn" onclick="toggleMapMaximize(event)">⤢</button>
+      </div>
+    </div>
+    <div id="map-svg-wrap">
+      <svg id="map-svg"></svg>
+    </div>
+  </div>
+
+  <script>
+    const deck = ${JSON.stringify(compiledSlides)};
+    let activeIdx = 0;
+    let isTransitioning = false;
+    let transitionWatchdog = null;
+    let currentAvatar = '🛸';
+    let projectedNodes = [];
+
+    function setMapAvatar(char) {
+      currentAvatar = char;
+      document.getElementById('avatar-modal').style.display = 'none';
+      drawProgressMap();
+    }
+
+    function setCustomMapAvatar() {
+      const val = document.getElementById('custom-emoji-input').value.trim();
+      setMapAvatar(val || '🛸');
+    }
+
+    const mapContainer = document.getElementById('progress-map-container');
+    function toggleMapMinimize(e) { if (e) e.stopPropagation(); mapContainer.classList.remove('maximized'); mapContainer.classList.toggle('minimized'); }
+    function toggleMapMaximize(e) { if (e) e.stopPropagation(); mapContainer.classList.remove('minimized'); mapContainer.classList.toggle('maximized'); setTimeout(drawProgressMap, 320); }
+    function handleMapContainerClick(e) { if (mapContainer.classList.contains('minimized')) toggleMapMinimize(e); }
+
+    const world = document.getElementById('world');
+    const slideElements = [];
+
+    function compileComponentHTML(c) {
+      if (c.type === "text") {
+        return '<div class="comp-text-block">' + c.content + '</div>';
+      } else if (c.type === "embed") {
+        let mediaTag = '';
+        if (c.url.endsWith('.mp4') || c.url.endsWith('.webm')) {
+          mediaTag = '<video src="' + c.url + '" controls autoplay loop muted playsinline></video>';
+        } else if (c.url.match(/\\.(jpeg|jpg|gif|png|webp)/i)) {
+          mediaTag = '<img src="' + c.url + '" loading="lazy" />';
+        } else {
+          mediaTag = '<iframe src="' + c.url + '" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>';
+        }
+        return '<div class="comp-embed-block">' + mediaTag + '</div>';
+      } else if (c.type === "button") {
+        return '<button class="comp-button" onclick="handleBtnAction(\\' ' + c.link + ' \\')">' + c.label + '</button>';
+      } else if (c.type === "orb") {
+        return '<div class="comp-orb"><div class="orb-circle">' + c.number + '</div><div class="orb-label">' + c.label + '</div></div>';
+      } else if (c.type === "mcq") {
+        let opts = (c.options || []).map((opt, oIdx) => 
+          '<div class="mcq-option" onclick="answerMCQ(this, ' + (oIdx === c.correct) + ')">' + opt + '</div>'
+        ).join('');
+        return '<div class="comp-mcq-box"><div class="mcq-question">' + c.question + '</div>' + opts + '</div>';
+      } else if (c.type === "code") {
+        return '<div>' + (c.html || '') + '</div>';
+      }
+      return '';
+    }
+
+    function handleBtnAction(link) {
+      const clean = link.trim().toLowerCase();
+      if (['east', 'west', 'south', 'north', 'in', 'out'].includes(clean)) {
+        triggerDirection(clean === 'east' ? 'right' : clean === 'west' ? 'left' : clean === 'south' ? 'down' : clean === 'north' ? 'up' : clean);
+      } else {
+        const targetIdx = parseInt(clean, 10);
+        if (!isNaN(targetIdx) && targetIdx >= 0 && targetIdx < deck.length) moveToSlide(targetIdx);
+      }
+    }
+
+    function answerMCQ(el, isCorrect) {
+      const parent = el.parentNode;
+      parent.querySelectorAll('.mcq-option').forEach(opt => opt.classList.remove('correct', 'wrong'));
+      el.classList.add(isCorrect ? 'correct' : 'wrong');
+    }
+
+    function buildScrollPlanes() {
+      world.innerHTML = '';
+      deck.forEach((s, idx) => {
+        const plane = document.createElement('div');
+        plane.className = 'slide-plane ' + (idx === 0 ? 'active' : '');
+        plane.id = 'plane-' + idx;
+        plane.style.transform = 'translate3d(' + s.x + 'px, ' + s.y + 'px, ' + s.z + 'px)';
+
+        let compHTML = (s.components || []).map(compileComponentHTML).join('');
+
+        plane.innerHTML = 
+          '<div class="scroll-canvas">' +
+            '<h1 class="slide-title-header">' + s.title + '</h1>' +
+            compHTML +
+          '</div>';
+
+        world.appendChild(plane);
+        slideElements.push(plane);
+      });
+
+      drawProgressMap();
+      moveToSlide(0, true);
+    }
+
+    function moveToSlide(idx, isInitial = false) {
+      if (isTransitioning && !isInitial) return;
+
+      if (!isInitial) {
+        isTransitioning = true;
+        document.body.classList.add('is-animating');
+        clearTimeout(transitionWatchdog);
+        transitionWatchdog = setTimeout(() => {
+          isTransitioning = false;
+          document.body.classList.remove('is-animating');
+        }, 580);
+      }
+
+      activeIdx = idx;
+      const target = deck[activeIdx];
+
+      world.style.transform = 'translate3d(' + (-target.x) + 'px, ' + (-target.y) + 'px, ' + (-target.z) + 'px)';
+      
+      slideElements.forEach((el, i) => {
+        el.classList.toggle('active', i === activeIdx);
+      });
+
+      updateProgressMap();
+    }
+
+    world.addEventListener('transitionend', (e) => {
+      if (e.target !== world) return;
+      isTransitioning = false;
+      clearTimeout(transitionWatchdog);
+      document.body.classList.remove('is-animating');
+    });
+
+    function triggerDirection(dir) {
+      if (isTransitioning) return;
+      const cur = deck[activeIdx];
+      let targetIdx = -1;
+
+      if (dir === 'right') {
+        targetIdx = findClosestInDirection(cur, (s) => s.x > cur.x && Math.abs(s.y - cur.y) < 800 && s.z === cur.z);
+      } else if (dir === 'left') {
+        targetIdx = findClosestInDirection(cur, (s) => s.x < cur.x && Math.abs(s.y - cur.y) < 800 && s.z === cur.z);
+      } else if (dir === 'down') {
+        targetIdx = findClosestInDirection(cur, (s) => s.y > cur.y && Math.abs(s.x - cur.x) < 800 && s.z === cur.z);
+      } else if (dir === 'up') {
+        targetIdx = findClosestInDirection(cur, (s) => s.y < cur.y && Math.abs(s.x - cur.x) < 800 && s.z === cur.z);
+      } else if (dir === 'in') {
+        targetIdx = findClosestInDirection(cur, (s) => s.x === cur.x && s.y === cur.y && s.z < cur.z);
+      } else if (dir === 'out') {
+        targetIdx = findClosestInDirection(cur, (s) => s.x === cur.x && s.y === cur.y && s.z > cur.z);
+      }
+
+      if (targetIdx !== -1) moveToSlide(targetIdx);
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+      if (e.key === 'ArrowRight') { e.preventDefault(); triggerDirection('right'); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); triggerDirection('left'); }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); triggerDirection('down'); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); triggerDirection('up'); }
+      else if (e.key === 'Enter') { e.preventDefault(); triggerDirection('in'); }
+      else if (e.key === 'Shift') { e.preventDefault(); triggerDirection('out'); }
+      else if (e.key === ' ') {
+        e.preventDefault();
+        if (activeIdx < deck.length - 1) moveToSlide(activeIdx + 1);
+      }
+    });
+
+    function findClosestInDirection(origin, predicate) {
+      let bestIdx = -1;
+      let minDistance = Infinity;
+      deck.forEach((s, idx) => {
+        if (idx === activeIdx) return;
+        if (predicate(s)) {
+          const dist = Math.hypot(s.x - origin.x, s.y - origin.y, s.z - origin.z);
+          if (dist < minDistance) {
+            minDistance = dist;
+            bestIdx = idx;
+          }
+        }
+      });
+      return bestIdx;
+    }
+
+    function drawProgressMap() {
+      const svg = document.getElementById('map-svg');
+      if (!svg) return;
+      svg.innerHTML = '';
+      if (deck.length === 0) return;
+
+      const clusterMap = {};
+      deck.forEach((s, idx) => {
+        const key = s.x + '_' + s.y;
+        if (!clusterMap[key]) clusterMap[key] = [];
+        clusterMap[key].push({ ...s, originalIdx: idx });
+      });
+
+      projectedNodes = [];
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+
+      deck.forEach((s, idx) => {
+        const key = s.x + '_' + s.y;
+        const cluster = clusterMap[key];
+        cluster.sort((a, b) => b.z - a.z);
+        const stackRank = cluster.findIndex(item => item.originalIdx === idx);
+
+        const sideBySideSpacing = 280;
+        const projX = s.x + (stackRank * sideBySideSpacing);
+        const projY = s.y;
+
+        projectedNodes.push({
+          idx: idx,
+          baseX: s.x,
+          baseY: s.y,
+          projX: projX,
+          projY: projY,
+          stackRank: stackRank,
+          title: s.title,
+          z: s.z
+        });
+
+        minX = Math.min(minX, projX); maxX = Math.max(maxX, projX);
+        minY = Math.min(minY, projY); maxY = Math.max(maxY, projY);
+      });
+
+      const pad = 700;
+      minX -= pad; maxX += pad; minY -= pad; maxY += pad;
+      const width = Math.max(1800, maxX - minX);
+      const height = Math.max(1400, maxY - minY);
+      svg.setAttribute('viewBox', minX + ' ' + minY + ' ' + width + ' ' + height);
+
+      deck.forEach(child => {
+        if (!child.parentId) return;
+        const parent = deck.find(s => s.id === child.parentId);
+        if (!parent) return;
+        if (child.x === parent.x && child.y === parent.y) return;
+
+        const pNode = projectedNodes.find(n => n.idx === deck.indexOf(parent));
+        const cNode = projectedNodes.find(n => n.idx === deck.indexOf(child));
+        if (!pNode || !cNode) return;
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', pNode.projX);
+        line.setAttribute('y1', pNode.projY);
+        line.setAttribute('x2', cNode.projX);
+        line.setAttribute('y2', cNode.projY);
+        line.setAttribute('stroke', 'rgba(255, 255, 255, 0.22)');
+        line.setAttribute('stroke-width', (width / 75));
+        line.setAttribute('stroke-dasharray', '8,8');
+        svg.appendChild(line);
+      });
+
+      const circleRadius = (width / 40);
+
+      projectedNodes.forEach(node => {
+        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        group.setAttribute('class', 'map-circle-node');
+        group.onclick = (e) => { e.stopPropagation(); moveToSlide(node.idx); };
+
+        const titleTag = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        titleTag.textContent = (node.idx + 1) + '. ' + node.title;
+        group.appendChild(titleTag);
+
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', node.projX);
+        circle.setAttribute('cy', node.projY);
+        circle.setAttribute('r', circleRadius);
+        circle.setAttribute('id', 'node-circle-' + node.idx);
+        circle.setAttribute('fill', node.idx === activeIdx ? '#6366f1' : 'rgba(255, 255, 255, 0.2)');
+        circle.setAttribute('stroke', node.idx === activeIdx ? '#ffffff' : 'rgba(255, 255, 255, 0.45)');
+        circle.setAttribute('stroke-width', (width / 360));
+        group.appendChild(circle);
+
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', node.projX);
+        text.setAttribute('y', node.projY);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('dominant-baseline', 'central');
+        text.setAttribute('font-size', (circleRadius * 0.95) + 'px');
+        text.setAttribute('font-weight', '700');
+        text.setAttribute('fill', node.idx === activeIdx ? '#ffffff' : '#94a3b8');
+        text.textContent = (node.idx + 1);
+        group.appendChild(text);
+
+        svg.appendChild(group);
+      });
+
+      const beacon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      beacon.setAttribute('id', 'map-avatar-beacon');
+      beacon.setAttribute('text-anchor', 'middle');
+      beacon.setAttribute('dominant-baseline', 'central');
+      beacon.setAttribute('font-size', (circleRadius * 1.6) + 'px');
+      beacon.textContent = currentAvatar;
+      svg.appendChild(beacon);
+
+      updateProgressMap();
+    }
+
+    function updateProgressMap() {
+      const activeProj = projectedNodes.find(n => n.idx === activeIdx);
+      const beacon = document.getElementById('map-avatar-beacon');
+      if (beacon && activeProj) {
+        beacon.setAttribute('x', activeProj.projX);
+        beacon.setAttribute('y', activeProj.projY - 75);
+      }
+
+      projectedNodes.forEach(n => {
+        const circle = document.getElementById('node-circle-' + n.idx);
+        if (circle) {
+          const isActive = (n.idx === activeIdx);
+          circle.setAttribute('fill', isActive ? '#6366f1' : 'rgba(255, 255, 255, 0.2)');
+          circle.setAttribute('stroke', isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.45)');
+          circle.setAttribute('stroke-width', isActive ? '4' : '2');
+        }
+      });
+
+      const counter = document.getElementById('map-counter');
+      if (counter) counter.textContent = 'Section ' + (activeIdx + 1) + ' / ' + deck.length;
+    }
+
+    buildScrollPlanes();
+  <\/script>
+</body>
+</html>`;
+    }
+
+    function openInNewTab() {
+      const htmlContent = generateStandaloneHTML(slides);
+      const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.target = "_blank";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function exportStaticFile() {
+      const html = generateStandaloneHTML(slides);
+      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "index.html";
+      a.click();
+      URL.revokeObjectURL(a.href);
+
+      setTimeout(() => {
+        if (confirm("Export complete! Would you like to clear the browser's stored draft data?")) {
+          try {
+            localStorage.removeItem(STORAGE_KEY);
+          } catch(e) {}
+          slides = JSON.parse(JSON.stringify(defaultDeck));
+          currentIdx = 0;
+          persist();
+          renderSpatialCanvas();
+        }
+      }, 300);
+    }
+
+    renderSpatialCanvas();
+  </script>
+</body>
+</html>
